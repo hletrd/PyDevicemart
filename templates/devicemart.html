@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DEVICEMART ORDER MANAGEMENT SYSTEM</title>
+	<link rel="stylesheet" href="/static/bootstrap/4.5.3/css/bootstrap.min.css">
+	<script src="/static/jquery/jquery-3.5.1.min.js"></script>
+	<script src="/static/popper.js/1.12.9/popper.min.js"></script>
+	<script src="/static/bootstrap/4.5.3/js/bootstrap.min.js"></script>
+	<link href="/static/remixicon/2.5.0/remixicon.css" rel="stylesheet">
+	<link href="/static/css/common.css" rel="stylesheet">
+	<style>
+		i {
+			pointer-events: none;
+		}
+	</style>
+</head>
+<body>
+	<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="/">DEVICEMART</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#nav_col">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="nav_col">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a class="nav-link" href="/"><i class="ri-list-check"></i> 주문 관리</span></a>
+					</li>
+					<li class="nav-item">
+						<a id="update" class="nav-link" href="#"><i class="ri-refresh-line"></i> 주문 새로고침</span></a>
+					</li>
+				</ul>
+				<form class="form-inline">
+					<input id="search" class="form-control" placeholder="검색">
+					<label class="text-white">&emsp;검색&nbsp;결과&nbsp;</label><label class="text-white" id="result"></label><label class="text-white">개</label>
+				</form>
+			</div>
+		</div>
+	</nav>
+	<div class="container content">
+		<table class="table table-condensed table-sm table-hover table-responsive" id="table">
+			<thead class="thead-dark">
+				<tr>
+					<th><i class="ri-calendar-check-line"></i> 주문일</th>
+					<th><i class="ri-list-check"></i> 주문번호</th>
+					<th><i class="ri-pencil-line"></i> 제품명</th>
+					<th>단가</th>
+					<th>수량</th>
+					<th>금액</th>
+					<th>부가세</th>
+					<th>총액</th>
+					<th><i class="ri-checkbox-line"></i> 확인</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+	<div id="authmodal" class="modal" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">디바이스마트 주문 관리 시스템</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-4"><label>비밀번호</label></div>
+						<div class="col-8"><input class="form-control" placeholder="비밀번호" id="password" type="password"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+				<button type="button" class="btn btn-primary" id="auth">인증</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		var btnclick = function(e) {
+			var status = $(e.target).data('status');
+			$.get('./check/'+$(e.target).data('id')+'/'+status).done(function(){
+				if (status == 1) {
+					$(e.target).attr('class', 'btn btn-outline-danger').data('status', 0).html('<i class="ri-close-line"></i>');
+				} else {
+					$(e.target).attr('class', 'btn btn-outline-success').data('status', 1).html('<i class="ri-check-line"></i>');
+				}
+			});
+		}
+		var update = function(text) {
+			$.get('/search/'+text).done(function(data){
+				if (data.result == false) {
+					$('#authmodal').modal();
+					return;
+				}
+				$('#result').text(data.data.length);
+				$('#table').find('tbody').html('');
+				for (var i in data.data){
+					var tr = $('<tr>');
+					tr.append($('<th>').append(data.data[i][1]))
+					var badge = $('<badge>').text(data.data[i][2]).attr('class', 'badge badge-secondary');
+					var a = $('<a>').append(badge);
+					a.attr('href', 'https://www.devicemart.co.kr/mypage/order_view?no='+data.data[i][2]);
+					a.attr('target', '_blank');
+					tr.append($('<td>').append(a));
+					if (data.data[i][3] >= 0) {
+						var name = data.data[i][4];
+						if (name.length > 30) {
+							name = name.substring(0, 30) + '...';
+						}
+						a = $('<a>').text(name);
+						a.attr('href', 'https://www.devicemart.co.kr/goods/view?no='+data.data[i][3]);
+						a.attr('target', '_blank');
+					} else {
+						a = data.data[i][4];
+						if (a.length > 30) {
+							a = a.substring(0, 30) + '...';
+						}
+					}
+					tr.append($('<td>').append(a));
+					tr.append($('<td>').append(data.data[i][6]));
+					tr.append($('<td>').append(data.data[i][5]));
+					tr.append($('<td>').append(data.data[i][7]));
+					tr.append($('<td>').append(data.data[i][9]));
+					tr.append($('<td>').append(data.data[i][10]));
+					if (data.data[i][8] == 0) {
+						var button = $('<button>').attr('class', 'btn btn-outline-danger').html('<i class="ri-close-line"></i>').data('id', data.data[i][0]).data('status', 0).click(btnclick);
+					} else {
+						var button = $('<button>').attr('class', 'btn btn btn-outline-success').html('<i class="ri-check-line"></i>').data('id', data.data[i][0]).data('status', 1).click(btnclick);
+					}
+					tr.append($('<td>').append(button));
+					$('#table').find('tbody').append(tr);
+				}
+				var tr = $('<tr>').attr('class', 'table-warning');
+				tr.append($('<th>').append('총계').attr('colspan', '3'));
+				tr.append($('<td>').append(data.sum[1]));
+				tr.append($('<td>').append(data.sum[2]));
+				tr.append($('<td>').append(data.sum[3]));
+				tr.append($('<td>').append(data.sum[4]));
+				tr.append($('<td>').append(data.sum[5]));
+				tr.append($('<td>').append());
+				$('#table').find('tbody').append(tr);
+				for (var i in data.magazine) {
+					var tr = $('<tr>').attr('class', 'table-success');
+					tr.append($('<th>').append('매거진').attr('colspan', '2'));
+					tr.append($('<td>').append(data.magazine[i][0]));
+					tr.append($('<td>').append(data.magazine[i][1]));
+					tr.append($('<td>').append(data.magazine[i][2]));
+					tr.append($('<td>').append(data.magazine[i][3]));
+					tr.append($('<td>').append(data.magazine[i][4]));
+					tr.append($('<td>').append(data.magazine[i][5]));
+					tr.append($('<td>').append());
+					$('#table').find('tbody').append(tr);
+				}
+			});
+		}
+		$(document).ready(function(){
+			$('#search').keyup(function(e){
+				update($(e.target).val())
+			});
+			$('#search').change(function(e){
+				$(e.target).keyup();
+			})
+			update('');
+		});
+		var auth = function(){
+			$.post('/auth', {password: $('#password').val()}).done(function(data){
+				if (data.result == true) {
+					$('#authmodal').modal('dispose');
+					$('#authmodal').remove();
+					$('.modal-backdrop').remove();
+					$('body').attr('class', '');
+					update('');
+				} else {
+					$('#password').val('');
+				}
+			});
+		};
+		$('#auth').click(auth);
+		$('#password').keyup(function(e){
+			if (e.keyCode == 13) {
+				auth();
+			}
+		});
+		$('#update').click(function(){
+			$.get('/update').done(function(data){
+				if (data.result == false) {
+					$('#update').data('content', '업데이트 요청에 실패하였습니다.');
+				} else {
+					$('#update').data('content', '업데이트 요청이 완료되었습니다.');
+				}
+				$('#update').popover('show');
+				setTimeout(function(){
+					$('#update').popover('dispose');
+				}, 1000);
+			});
+		});
+	</script>
+</body>
+</html>
